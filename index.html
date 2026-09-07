@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Würfel — Zufalls-Satzgenerator</title>
-  <meta name="description" content="Sätze eingeben, würfeln lassen, kopieren. Ein verspielter Zufallsgenerator für deine Sätze.">
+  <meta name="description" content="Sätze eintragen, würfeln lassen, kopieren. Ein verspielter Zufallsgenerator mit gemeinsamer Satzliste für alle Besucher.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -103,6 +103,11 @@
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
+    .scene:hover { animation: wiggle 0.6s ease-in-out infinite; }
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(5deg); }
+    }
 
     .cube {
       width: 100%;
@@ -111,11 +116,6 @@
       transform-style: preserve-3d;
       transform: rotateX(-18deg) rotateY(24deg);
       transition: transform 1.15s cubic-bezier(0.22, 1.2, 0.36, 1);
-    }
-    .scene:hover { animation: wiggle 0.6s ease-in-out infinite; }
-    @keyframes wiggle {
-      0%, 100% { transform: rotate(0deg); }
-      50% { transform: rotate(5deg); }
     }
 
     .face {
@@ -234,7 +234,7 @@
     .copy-btn:hover { transform: translateY(-2px); }
     .copy-btn.copied { background: var(--ok); }
 
-    /* ---------- Satzverwaltung ---------- */
+    /* ---------- Satzliste ---------- */
     .manage-card {
       background: var(--card);
       border-radius: var(--radius);
@@ -288,9 +288,10 @@
       border-radius: 14px;
       padding: 0 18px;
       cursor: pointer;
-      transition: transform 0.15s ease, background 0.2s ease;
+      transition: transform 0.15s ease, background 0.2s ease, opacity 0.2s ease;
     }
-    .add-row button:hover { transform: scale(1.06); background: #6d28d9; }
+    .add-row button:hover:not(:disabled) { transform: scale(1.06); background: #6d28d9; }
+    .add-row button:disabled { opacity: 0.55; cursor: not-allowed; }
 
     ul.sentence-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
     .sentence-list li {
@@ -307,24 +308,24 @@
       to { transform: translateX(0); opacity: 1; }
     }
     .sentence-list li span { flex: 1; overflow-wrap: anywhere; font-weight: 600; }
-    .del-btn {
-      border: none;
-      background: transparent;
-      color: #b0aed6;
-      font-size: 1.1rem;
-      line-height: 1;
-      cursor: pointer;
-      padding: 6px;
-      border-radius: 8px;
-      transition: color 0.15s ease, background 0.15s ease;
-    }
-    .del-btn:hover { color: #dc2626; background: #fee2e2; }
 
     .empty-note {
       text-align: center;
       color: var(--ink-soft);
       font-weight: 600;
       margin: 4px 0;
+    }
+    .retry-btn {
+      align-self: center;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--bg-2);
+      border: none;
+      border-radius: 999px;
+      padding: 10px 22px;
+      cursor: pointer;
     }
 
     .toolbar {
@@ -348,8 +349,14 @@
       transition: background 0.15s ease, transform 0.15s ease;
     }
     .tool-btn:hover { background: #e2e0f5; transform: translateY(-1px); }
-    .tool-btn.danger { color: #dc2626; background: #fef2f2; }
-    .tool-btn.danger:hover { background: #fee2e2; }
+
+    .share-note {
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      font-weight: 600;
+      margin: 0;
+    }
 
     footer {
       margin-top: 28px;
@@ -407,7 +414,7 @@
           <div class="face face-6"><span class="pip p11"></span><span class="pip p21"></span><span class="pip p31"></span><span class="pip p13"></span><span class="pip p23"></span><span class="pip p33"></span></div>
         </div>
       </div>
-      <button class="roll-btn" id="rollBtn" type="button">Würfeln!</button>
+      <button class="roll-btn" id="rollBtn" type="button" disabled>Würfeln!</button>
       <p class="stage-hint" id="stageHint" hidden>Füge unten zuerst ein paar Sätze hinzu ⬇️</p>
     </section>
 
@@ -417,28 +424,28 @@
       <button class="copy-btn" id="copyBtn" type="button">📋 Kopieren</button>
     </section>
 
-    <section class="manage-card" aria-label="Sätze verwalten">
-      <h2>Deine Sätze <span class="count-badge" id="countBadge">0 Sätze</span></h2>
+    <section class="manage-card" aria-label="Gemeinsame Sätze">
+      <h2>Unsere Sätze <span class="count-badge" id="countBadge">–</span></h2>
 
       <div class="add-row">
-        <input type="text" id="sentenceInput" placeholder="Neuen Satz eingeben …" maxlength="500" aria-label="Neuer Satz">
-        <button id="addBtn" type="button" title="Satz hinzufügen" aria-label="Satz hinzufügen">+</button>
+        <input type="text" id="sentenceInput" placeholder="Neuen Satz eintragen …" maxlength="500" aria-label="Neuer Satz">
+        <button id="addBtn" type="button" title="Satz eintragen" aria-label="Satz eintragen">+</button>
       </div>
 
       <ul class="sentence-list" id="sentenceList"></ul>
-      <p class="empty-note" id="emptyNote" hidden>Noch keine Sätze — leg los! ✨</p>
+      <p class="empty-note" id="statusNote">Lade Sätze …</p>
+      <button class="retry-btn" id="retryBtn" type="button" hidden>Erneut versuchen</button>
 
       <div class="toolbar">
+        <button class="tool-btn" id="refreshBtn" type="button">🔄 Aktualisieren</button>
         <button class="tool-btn" id="exportBtn" type="button">⬇️ Export (.txt)</button>
-        <button class="tool-btn" id="importBtn" type="button">⬆️ Import (.txt)</button>
-        <button class="tool-btn danger" id="clearBtn" type="button">🗑️ Alle löschen</button>
-        <input type="file" id="importFile" accept=".txt,text/plain" hidden>
       </div>
+      <p class="share-note">Gemeinsame Liste: Was du einträgst, sehen alle Besucher. Einträge können hier nicht gelöscht werden.</p>
     </section>
   </main>
 
   <footer>
-    Gespeichert wird nur lokal in deinem Browser ·
+    Ein Würfel für alle ·
     <a href="https://github.com/norocketscience/wuerfel" rel="noopener">Quellcode auf GitHub</a>
   </footer>
 
@@ -448,17 +455,18 @@
     (function () {
       'use strict';
 
-      var STORAGE_KEY = 'wuerfel.sentences.v1';
-      var SEED = [
-        'Der Würfel ist gefallen!',
-        'Wer wagt, gewinnt.',
-        'Heute ist dein Glückstag.',
-        'Manchmal entscheidet am besten der Zufall.'
-      ];
+      /* Firebase Realtime Database (REST-API, append-only per Serverregeln) */
+      var DB_URL = 'https://wuerfel-3e3eb-default-rtdb.firebaseio.com';
+      var DB_ENDPOINT = DB_URL.replace(/\/+$/, '') + '/saetze.json';
+      var CACHE_KEY = 'wuerfel.shared.cache.v1';
+      var REFRESH_MIN_MS = 30000;
 
-      var sentences = load();
+      var sentences = [];
+      var loadState = 'loading'; /* loading | ready | error */
       var lastIndex = -1;
       var rolling = false;
+      var adding = false;
+      var lastFetch = 0;
       var rotX = -18;
       var rotY = 24;
       var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -473,33 +481,83 @@
       var sentenceInput = document.getElementById('sentenceInput');
       var addBtn = document.getElementById('addBtn');
       var sentenceList = document.getElementById('sentenceList');
-      var emptyNote = document.getElementById('emptyNote');
+      var statusNote = document.getElementById('statusNote');
+      var retryBtn = document.getElementById('retryBtn');
       var countBadge = document.getElementById('countBadge');
+      var refreshBtn = document.getElementById('refreshBtn');
       var exportBtn = document.getElementById('exportBtn');
-      var importBtn = document.getElementById('importBtn');
-      var importFile = document.getElementById('importFile');
-      var clearBtn = document.getElementById('clearBtn');
       var toast = document.getElementById('toast');
       var toastTimer = null;
 
-      /* ---------- Persistenz ---------- */
+      /* ---------- Laden & Speichern (gemeinsame Datenbank) ---------- */
 
-      function load() {
-        try {
-          var raw = localStorage.getItem(STORAGE_KEY);
-          if (raw === null) return SEED.slice();
-          var parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) {
-            return parsed.filter(function (s) { return typeof s === 'string'; });
-          }
-        } catch (e) { /* Privatmodus oder kaputte Daten — mit leerer Liste starten */ }
-        return [];
+      function parseDb(data) {
+        if (!data || typeof data !== 'object') return [];
+        /* Push-Keys sind chronologisch sortierbar */
+        return Object.keys(data).sort().map(function (k) { return data[k]; })
+          .filter(function (s) { return typeof s === 'string' && s.trim() !== ''; });
       }
 
-      function save() {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(sentences));
-        } catch (e) { /* Speichern nicht möglich (z. B. Privatmodus) — App bleibt nutzbar */ }
+      function loadSentences(showErrors) {
+        lastFetch = Date.now();
+        fetch(DB_ENDPOINT, { cache: 'no-store' })
+          .then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+          })
+          .then(function (data) {
+            sentences = parseDb(data);
+            loadState = 'ready';
+            try { localStorage.setItem(CACHE_KEY, JSON.stringify(sentences)); } catch (e) { /* egal */ }
+            render();
+          })
+          .catch(function () {
+            var cached = null;
+            try { cached = JSON.parse(localStorage.getItem(CACHE_KEY)); } catch (e) { /* egal */ }
+            if (Array.isArray(cached) && cached.length > 0) {
+              sentences = cached;
+              loadState = 'ready';
+              render();
+              showToast('Keine Verbindung — zeige letzten bekannten Stand');
+            } else {
+              loadState = 'error';
+              render();
+              if (showErrors) showToast('Liste konnte nicht geladen werden');
+            }
+          });
+      }
+
+      function addSentence() {
+        var text = sentenceInput.value.trim();
+        if (!text || adding) return;
+        if (sentences.indexOf(text) !== -1) {
+          showToast('Diesen Satz gibt es schon 😉');
+          return;
+        }
+        adding = true;
+        addBtn.disabled = true;
+        fetch(DB_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(text)
+        })
+          .then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+          })
+          .then(function () {
+            sentenceInput.value = '';
+            showToast('Satz für alle gespeichert ✓');
+            loadSentences(true); /* frisch laden, inkl. Einträgen anderer */
+          })
+          .catch(function () {
+            showToast('Speichern fehlgeschlagen — bitte später erneut versuchen');
+          })
+          .then(function () {
+            adding = false;
+            addBtn.disabled = false;
+            sentenceInput.focus();
+          });
       }
 
       /* ---------- Zufall ---------- */
@@ -524,32 +582,33 @@
 
       function render() {
         sentenceList.textContent = '';
-        sentences.forEach(function (text, i) {
+        sentences.forEach(function (text) {
           var li = document.createElement('li');
           var span = document.createElement('span');
           span.textContent = text;
-          var del = document.createElement('button');
-          del.className = 'del-btn';
-          del.type = 'button';
-          del.textContent = '✕';
-          del.setAttribute('aria-label', 'Satz löschen: ' + text);
-          del.addEventListener('click', function () {
-            sentences.splice(i, 1);
-            if (lastIndex === i) lastIndex = -1;
-            else if (lastIndex > i) lastIndex--;
-            save();
-            render();
-          });
           li.appendChild(span);
-          li.appendChild(del);
           sentenceList.appendChild(li);
         });
 
         var n = sentences.length;
-        countBadge.textContent = n === 1 ? '1 Satz' : n + ' Sätze';
-        emptyNote.hidden = n > 0;
-        stageHint.hidden = n > 0;
-        rollBtn.disabled = n === 0 || rolling;
+        countBadge.textContent = loadState === 'ready' ? (n === 1 ? '1 Satz' : n + ' Sätze') : '–';
+
+        if (loadState === 'loading') {
+          statusNote.textContent = 'Lade Sätze …';
+          statusNote.hidden = false;
+          retryBtn.hidden = true;
+        } else if (loadState === 'error') {
+          statusNote.textContent = 'Die Liste konnte nicht geladen werden.';
+          statusNote.hidden = false;
+          retryBtn.hidden = false;
+        } else {
+          statusNote.textContent = 'Noch keine Sätze — trag den ersten ein! ✨';
+          statusNote.hidden = n > 0;
+          retryBtn.hidden = true;
+        }
+
+        stageHint.hidden = !(loadState === 'ready' && n === 0);
+        rollBtn.disabled = rolling || loadState !== 'ready' || n === 0;
       }
 
       /* ---------- Würfeln ---------- */
@@ -565,7 +624,7 @@
       };
 
       function roll() {
-        if (rolling || sentences.length === 0) return;
+        if (rolling || loadState !== 'ready' || sentences.length === 0) return;
         rolling = true;
         rollBtn.disabled = true;
         resultCard.classList.remove('visible');
@@ -580,7 +639,7 @@
           resetCopyBtn();
           burstConfetti();
           rolling = false;
-          rollBtn.disabled = false;
+          render();
         }
 
         if (reducedMotion) {
@@ -588,7 +647,6 @@
           return;
         }
 
-        cube.classList.add('rolling');
         /* volle Extra-Drehungen aufaddieren, damit die Animation immer vorwärts läuft */
         rotX = Math.round(rotX / 360) * 360 + 360 * (1 + randomInt(2)) + face.x - 18;
         rotY = Math.round(rotY / 360) * 360 + 360 * (1 + randomInt(2)) + face.y + 24;
@@ -598,7 +656,6 @@
         function onDone() {
           if (done) return;
           done = true;
-          cube.classList.remove('rolling');
           finish();
         }
         cube.addEventListener('transitionend', onDone, { once: true });
@@ -664,21 +721,7 @@
         ta.remove();
       }
 
-      /* ---------- Sätze verwalten ---------- */
-
-      function addSentence() {
-        var text = sentenceInput.value.trim();
-        if (!text) return;
-        if (sentences.indexOf(text) !== -1) {
-          showToast('Diesen Satz gibt es schon 😉');
-          return;
-        }
-        sentences.push(text);
-        sentenceInput.value = '';
-        sentenceInput.focus();
-        save();
-        render();
-      }
+      /* ---------- Export ---------- */
 
       function exportTxt() {
         if (sentences.length === 0) {
@@ -695,38 +738,6 @@
         a.remove();
         URL.revokeObjectURL(url);
         showToast('Satzliste exportiert ⬇️');
-      }
-
-      function importTxt(file) {
-        var reader = new FileReader();
-        reader.onload = function () {
-          var lines = String(reader.result).split(/\r?\n/);
-          var added = 0, skipped = 0;
-          lines.forEach(function (line) {
-            var text = line.trim();
-            if (!text) return;
-            if (sentences.indexOf(text) !== -1) { skipped++; return; }
-            sentences.push(text);
-            added++;
-          });
-          save();
-          render();
-          if (added === 0 && skipped === 0) showToast('Die Datei enthielt keine Sätze');
-          else showToast(added + ' importiert' + (skipped ? ', ' + skipped + ' Duplikate übersprungen' : ' ✓'));
-        };
-        reader.onerror = function () { showToast('Datei konnte nicht gelesen werden'); };
-        reader.readAsText(file);
-      }
-
-      function clearAll() {
-        if (sentences.length === 0) return;
-        if (!window.confirm('Wirklich alle ' + sentences.length + ' Sätze löschen?')) return;
-        sentences = [];
-        lastIndex = -1;
-        save();
-        render();
-        resultCard.classList.remove('visible');
-        showToast('Liste geleert');
       }
 
       /* ---------- Toast ---------- */
@@ -747,16 +758,18 @@
       sentenceInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') addSentence();
       });
+      refreshBtn.addEventListener('click', function () { loadState = 'loading'; render(); loadSentences(true); });
+      retryBtn.addEventListener('click', function () { loadState = 'loading'; render(); loadSentences(true); });
       exportBtn.addEventListener('click', exportTxt);
-      importBtn.addEventListener('click', function () { importFile.click(); });
-      importFile.addEventListener('change', function () {
-        if (importFile.files && importFile.files[0]) importTxt(importFile.files[0]);
-        importFile.value = '';
+      document.addEventListener('visibilitychange', function () {
+        /* Beim Zurückkehren zum Tab frische Daten holen (gedrosselt) */
+        if (!document.hidden && loadState === 'ready' && Date.now() - lastFetch > REFRESH_MIN_MS) {
+          loadSentences(false);
+        }
       });
-      clearBtn.addEventListener('click', clearAll);
 
-      save(); /* Seed beim Erstbesuch persistieren */
       render();
+      loadSentences(true);
     })();
   </script>
 </body>
